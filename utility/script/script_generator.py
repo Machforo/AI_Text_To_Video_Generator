@@ -2,16 +2,16 @@ import os
 from openai import OpenAI
 import json
 
-if len(os.environ.get("GROQ_API_KEY")) > 30:
+# Choose model and client based on API key
+if len(os.environ.get("GROQ_API_KEY", "")) > 30:
     from groq import Groq
     model = "llama-3.1-8b-instant"
-    client = Groq(
-        api_key=os.environ.get("GROQ_API_KEY"),
-        )
+    client = Groq(api_key=os.environ.get("GROQ_API_KEY"))
 else:
     OPENAI_API_KEY = os.getenv('OPENAI_KEY')
     model = "gpt-4o"
     client = OpenAI(api_key=OPENAI_API_KEY)
+
 
 def generate_script(topic):
     prompt = (
@@ -35,7 +35,7 @@ def generate_script(topic):
 
         Keep it brief, highly interesting, and unique.
 
-        Stictly output the script in a JSON format like below, and only provide a parsable JSON object with the key 'script'.
+        Strictly output the script in a JSON format like below, and only provide a parsable JSON object with the key 'script'.
 
         # Output
         {"script": "Here is the script ..."}
@@ -43,22 +43,25 @@ def generate_script(topic):
     )
 
     response = client.chat.completions.create(
-            model=model,
-            messages=[
-                {"role": "system", "content": prompt},
-                {"role": "user", "content": topic}
-            ]
-        )
+        model=model,
+        messages=[
+            {"role": "system", "content": prompt},
+            {"role": "user", "content": topic}
+        ]
+    )
+
     content = response.choices[0].message.content
 
     try:
-        # Escape unescaped newlines
+        # Clean unescaped newlines or control characters
         content_cleaned = content.replace('\n', '\\n')
-        script = content["script"] if isinstance(content, dict) else json.loads(content)["script"]
+
+        # Parse as JSON
+        script = json.loads(content_cleaned)["script"]
+
     except json.JSONDecodeError as e:
-        print("Failed to parse script content as JSON.")
-        print("Raw content:", content)
+        print("❌ Failed to parse script content as JSON.")
+        print("Raw content:", repr(content))
         raise e
-        
 
     return script
