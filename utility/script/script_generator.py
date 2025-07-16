@@ -50,12 +50,14 @@ def generate_script(topic):
             ]
         )
     content = response.choices[0].message.content
+
     try:
-        script = json.loads(content)["script"]
-    except Exception as e:
-        json_start_index = content.find('{')
-        json_end_index = content.rfind('}')
-        print(content)
-        content = content[json_start_index:json_end_index+1]
-        script = json.loads(content)["script"]
+        content_cleaned = content.encode('utf-8').decode('unicode_escape')
+        script = json.loads(content_cleaned)["script"]
+    except json.JSONDecodeError as e:
+        print("Failed to parse script content as JSON.")
+        print("Raw content:", content)
+        raise e
+    
+
     return script
