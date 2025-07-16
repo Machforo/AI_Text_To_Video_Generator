@@ -52,12 +52,13 @@ def generate_script(topic):
     content = response.choices[0].message.content
 
     try:
-        content_cleaned = content.encode('utf-8').decode('unicode_escape')
+        # Escape unescaped newlines
+        content_cleaned = content.replace('\n', '\\n')
         script = json.loads(content_cleaned)["script"]
     except json.JSONDecodeError as e:
         print("Failed to parse script content as JSON.")
         print("Raw content:", content)
         raise e
-    
+        
 
     return script
