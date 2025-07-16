@@ -54,7 +54,7 @@ def generate_script(topic):
     try:
         # Escape unescaped newlines
         content_cleaned = content.replace('\n', '\\n')
-        script = json.loads(content_cleaned)["script"]
+        script = content["script"] if isinstance(content, dict) else json.loads(content)["script"]
     except json.JSONDecodeError as e:
         print("Failed to parse script content as JSON.")
         print("Raw content:", content)
